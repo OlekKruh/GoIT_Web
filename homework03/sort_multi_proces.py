@@ -7,23 +7,23 @@ import time
 init()
 
 
-def sort_by_extension(path):
+def sort_by_extension(path_list):
     print(f"{Fore.MAGENTA}Current process ID:{Style.RESET_ALL} {os.getpid()}")
 
-    start_time = time.time()
+    start_time1 = time.time()
     delay_time = random.uniform(0.1, 2.0)
     time.sleep(delay_time)
 
-    sorted_files = sorted(os.listdir(path), key=lambda x: os.path.splitext(x)[1])
+    sorted_files = sorted(os.listdir(path_list), key=lambda x: os.path.splitext(x)[1])
     if len(sorted_files) == 0:
         print(f'{Fore.RED}Directory is Empty.{Style.RESET_ALL}')
     else:
         for file in sorted_files:
             print(f'{file}')
 
-    end_time = time.time()
-    processing_time = end_time - start_time
-    print(f'{Fore.GREEN}Sorted finished in {processing_time:.2f} seconds.{Style.RESET_ALL}')
+    end_time1 = time.time()
+    processing_time1 = end_time1 - start_time1
+    print(f'{Fore.GREEN}Sorted finished in {processing_time1:.2f} seconds.{Style.RESET_ALL}')
     return
 
 
