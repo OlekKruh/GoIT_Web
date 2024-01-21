@@ -28,6 +28,7 @@ def sort_by_extension(path):
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     command = "C:\\Users\\Alex\\Downloads\\Test"  # input('Enter directory path: ')
     list_of_dirs = []
 
@@ -45,4 +46,7 @@ if __name__ == "__main__":
         pool.close()
         pool.join()
 
-    print(f'{Fore.YELLOW}Program ENDs. All processes completed.{Style.RESET_ALL}')
+    end_time = time.time()
+    processing_time = end_time - start_time
+    print(f'{Fore.YELLOW}Program ENDs. All processes completed.\n'
+          f'Total time is: {processing_time:.2f} seconds.{Style.RESET_ALL}')
