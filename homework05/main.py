@@ -55,7 +55,7 @@ async def get_exchange_rate(currency, days):
 
     async with aiohttp.ClientSession() as session:
         try:
-            for i in range(days, 0, -1):
+            for i in range(days-1, -1, -1):
                 archive_day = today_data - timedelta(days=i)
                 formatted_archive_day = archive_day.strftime("%d.%m.%Y")
                 question_url = url + formatted_archive_day
