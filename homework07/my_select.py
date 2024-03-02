@@ -1,5 +1,5 @@
 from sqlalchemy import select, func, desc
-from tables import Teacher, Subject, Group, Student, Grade
+from tables import Teacher, Subject, Student, Grade
 from connect_db import session
 
 
