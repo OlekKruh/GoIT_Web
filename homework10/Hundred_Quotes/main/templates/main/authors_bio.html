@@ -1,17 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ title }}</title>
-</head>
-<body>
-<p>{{ menu|join:" | " }}</p>
+{% extends 'base.html' %}
+
+{% block content %}
 <h1>{{ title }}</h1>
 
 <h2>{{ author_bio.Fullname }}</h2>
-<p><strong>Birthdate:</strong> {{ author_bio.Born_Date }}</p>
-<p><strong>Birthplace:</strong> {{ author_bio.Born_Location }}</p>
-<p><strong>Description:</strong> {{ author_bio.Description }}</p>
+<p><strong>Birthdate:</strong> {{ author_bio.Born_Date|linebreaks }}</p>
+<p><strong>Birthplace:</strong> {{ author_bio.Born_Location|linebreaks }}</p>
+<p><strong>Description:</strong> {{ author_bio.Description|linebreaks }}</p>
 
-</body>
-</html>
+{% endblock %}

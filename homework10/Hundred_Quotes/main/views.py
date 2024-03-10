@@ -40,7 +40,7 @@ def find_in_list_of_dicts(bio_db, full_name, author_name):
 
 def quotes(request):
     data = {
-        'title': 'Home page',
+        'title': 'Famous people quotes',
         'menu': menu,
         'posts': quote_db,
         'bio': bio_db,
@@ -52,7 +52,7 @@ def author_bio(request, author_name):
     author_bio = find_in_list_of_dicts(bio_db, 'Fullname', author_name)
 
     if not author_bio:
-        return render(request, 'main/author_not_found.html', {'author_name': author_name})
+        return render(request, 'main/author_not_found.html', {'author_name': author_name, 'menu': menu})
 
     data = {
         'menu': menu,
@@ -62,7 +62,7 @@ def author_bio(request, author_name):
 
 
 def about(request):
-    return render(request, 'main/about.html', {'title': 'About website'})
+    return render(request, 'main/about.html', {'title': 'About website', 'menu': menu})
 
 
 def contact(request):

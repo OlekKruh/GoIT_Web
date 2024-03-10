@@ -1,14 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Author Not Found</title>
-</head>
-<body>
-<p>{{ menu|join:" | " }}</p>
+{% extends 'base.html' %}
+
+{% block content %}
 <h1>Author Not Found</h1>
 
-<p>No biographical information for the author named: {{ author_name }}</p>
+<p>No biographical for the author {{ author_name }} found.</p>
 
-</body>
-</html>
+{% endblock %}
