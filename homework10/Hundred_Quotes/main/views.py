@@ -1,7 +1,10 @@
+import pandas as pd
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 import json
+import requests
+from bs4 import BeautifulSoup
 
 # Create your views here.
 
@@ -21,6 +24,10 @@ menu = [
     {
         'title': 'Login',
         'url_name': 'login'
+    },
+    {
+        'title': 'Scrape-quotes',
+        'url_name': 'scrape_quotes',
     },
 ]
 
@@ -71,3 +78,45 @@ def contact(request):
 
 def login(request):
     return HttpResponse("Authorization")
+
+
+def scrape_quotes_from_website(request):
+    url = 'http://127.0.0.1:8000/'
+
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        quotes = soup.find_all('li')
+
+        scraped_data = []
+
+        for quote in quotes:
+            author_name = quote.find('a').text
+            paragraphs = quote.find_all('p')
+
+            if paragraphs:
+                quote_text = paragraphs[0].text
+                tags = paragraphs[1].text.split(' | ')
+
+                quote_data = {
+                    'author': author_name,
+                    'quote': quote_text,
+                    'tags': tags,
+                }
+
+                scraped_data.append(quote_data)
+
+        df = pd.DataFrame(scraped_data)
+
+        excel_file = 'scraped_quotes.xlsx'
+        df.to_excel(excel_file, index=False)
+
+        with open(excel_file, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/vnd.ms-excel')
+            response['Content-Disposition'] = 'attachment; filename=scraped_quotes.xlsx'
+        return HttpResponse(json.dumps(scraped_data), content_type='application/json')
+
+    else:
+        return HttpResponse(f"Failed to retrieve the page. Status code: {response.status_code}")
