@@ -44,7 +44,7 @@ def add_quote(request):
                 'tags': tags
             }
 
-            with open('json/authors_quotes.json', 'w', encoding='utf-8') as file:
+            with open('json/authors_quotes.json', 'r+', encoding='utf-8') as file:
                 data = json.load(file)
                 data.append(new_quote)
                 file.seek(0)
