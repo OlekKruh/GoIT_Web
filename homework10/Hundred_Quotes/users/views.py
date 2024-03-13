@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.shortcuts import render, redirect
 from .forms import LoginUserForm
 from .forms import QuoteForm
-from .models import Quote
+import json
 
 
 def login_user(request):
@@ -32,16 +32,25 @@ def add_quote(request):
     if request.method == 'POST':
         form = QuoteForm(request.POST)
         if form.is_valid():
-            # Create a new Quote instance with the form data
-            new_quote = Quote(
-                quote_text=form.cleaned_data['quote_text'],
-                author_name=form.cleaned_data['author_name'],
-                tags=form.cleaned_data['tags']
-            )
-            # Save the new quote to the database
-            new_quote.save()
-            # Redirect to a success page or back to the form
-            return redirect('add_quote_success')  # Replace 'add_quote_success' with the URL name of your success page
+            # Extract the form data
+            quote_text = form.cleaned_data['quote_text']
+            author_name = form.cleaned_data['author_name']
+            tags = form.cleaned_data['tags']
+
+            # Create a dictionary for the new quote
+            new_quote = {
+                'quote_text': quote_text,
+                'author_name': author_name,
+                'tags': tags
+            }
+
+            with open('json/authors_quotes.json', 'w', encoding='utf-8') as file:
+                data = json.load(file)
+                data.append(new_quote)
+                file.seek(0)
+                json.dump(data, file, indent=4, ensure_ascii=False)
+
+            return redirect('add_quote_success')
     else:
         form = QuoteForm()
     return render(request, 'main/add_quote.html', {'form': form})
