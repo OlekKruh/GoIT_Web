@@ -9,6 +9,7 @@
 </head>
 <body>
 <ul>
+
     {% for m in menu %}
     {% if not forloop.last %}
     <li>{% else %}
@@ -16,6 +17,7 @@
         <a href="{% url m.url_name %}">{{m.title}}</a>
     </li>
     {% endfor %}
+
 </ul>
 
 {% block content %} {% endblock %}

@@ -1,12 +1,10 @@
-import pandas as pd
-from django.http import HttpResponse
-from django.shortcuts import render
-from django.template.loader import render_to_string
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 import json
 import requests
 from bs4 import BeautifulSoup
 
-# Create your views here.
+from users.forms import QuoteForm
 
 menu = [
     {
@@ -23,19 +21,17 @@ menu = [
     },
     {
         'title': 'Login',
-        'url_name': 'login'
+        'url_name': 'users:login'
     },
     {
         'title': 'Scrape-quotes',
         'url_name': 'scrape_quotes',
     },
+    {
+        'title': 'Add_quotes',
+        'url_name': 'add_quote',
+    },
 ]
-
-with open('json/authors_quotes.json', 'r', encoding='utf-8') as file:
-    quote_db = json.load(file)
-
-with open('json/authors_bio.json', 'r', encoding='utf-8') as file:
-    bio_db = json.load(file)
 
 
 def find_in_list_of_dicts(bio_db, full_name, author_name):
@@ -46,16 +42,28 @@ def find_in_list_of_dicts(bio_db, full_name, author_name):
 
 
 def quotes(request):
+    try:
+        with open('json/authors_quotes.json', 'r', encoding='utf-8') as file:
+            quote_db = json.load(file)
+    except FileNotFoundError:
+        quote_db = []
+
     data = {
         'title': 'Famous people quotes',
         'menu': menu,
         'posts': quote_db,
-        'bio': bio_db,
     }
+
     return render(request, 'main/quotes.html', context=data)
 
 
 def author_bio(request, author_name):
+    try:
+        with open('json/authors_bio.json', 'r', encoding='utf-8') as file:
+            bio_db = json.load(file)
+    except FileNotFoundError:
+        bio_db = []
+
     author_bio = find_in_list_of_dicts(bio_db, 'Fullname', author_name)
 
     if not author_bio:
@@ -73,50 +81,79 @@ def about(request):
 
 
 def contact(request):
-    return HttpResponse("Feedback")
+    return render(request, 'main/about.html', {'title': 'Contact', 'menu': menu})
 
 
 def login(request):
-    return HttpResponse("Authorization")
+    return render(request, 'D:/MyProjects/GoIT_Web/homework10/Hundred_Quotes/users/templates/users/login.html',
+                  {'title': 'Contact', 'menu': menu})
 
 
 def scrape_quotes_from_website(request):
-    url = 'http://127.0.0.1:8000/'
+    url = 'https://quotes.toscrape.com'
+    dict_of_quotes = []
+    dict_of_authors_bio = []
+    counter = 1
 
-    response = requests.get(url)
+    while url:
+        my_requests = requests.get(url)
+        src = my_requests.text
+        soup = BeautifulSoup(src, 'lxml')
 
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        quotes = soup.find_all('li')
-
-        scraped_data = []
-
+        quotes = soup.find_all(class_='quote')
         for quote in quotes:
-            author_name = quote.find('a').text
-            paragraphs = quote.find_all('p')
-
-            if paragraphs:
-                quote_text = paragraphs[0].text
-                tags = paragraphs[1].text.split(' | ')
-
-                quote_data = {
-                    'author': author_name,
-                    'quote': quote_text,
-                    'tags': tags,
+            text = quote.find('span').text
+            author = quote.find('small').text
+            tags = [tag.text for tag in quote.find_all(class_='tag')]
+            dict_of_quotes.append(
+                {
+                    'Author': author,
+                    'Quote': text,
+                    'Tags': tags,
                 }
+            )
 
-                scraped_data.append(quote_data)
+            author_bio_link = 'https://quotes.toscrape.com' + quote.find('a')['href']
+            my_author_bio_requests = requests.get(author_bio_link)
+            src_author = my_author_bio_requests.text
+            author_soup = BeautifulSoup(src_author, 'lxml')
 
-        df = pd.DataFrame(scraped_data)
+            fullname = author_soup.find(class_='author-title').text
+            born_date = author_soup.find(class_='author-born-date').text
+            born_location = author_soup.find(class_='author-born-location').text
+            description = author_soup.find(class_='author-description').text.strip()
+            dict_of_authors_bio.append(
+                {
+                    'Fullname': fullname,
+                    'Born_Date': born_date,
+                    'Born_Location': born_location,
+                    'Description': description,
+                }
+            )
 
-        excel_file = 'scraped_quotes.xlsx'
-        df.to_excel(excel_file, index=False)
+        next_page_href = soup.find(class_='next')
+        if next_page_href:
+            next_page_link = 'https://quotes.toscrape.com' + next_page_href.find('a')['href']
+            url = next_page_link
+        else:
+            break
 
-        with open(excel_file, 'rb') as f:
-            response = HttpResponse(f.read(), content_type='application/vnd.ms-excel')
-            response['Content-Disposition'] = 'attachment; filename=scraped_quotes.xlsx'
-        return HttpResponse(json.dumps(scraped_data), content_type='application/json')
+    with open('json/authors_quotes.json', 'w', encoding='utf-8') as file:
+        json.dump(dict_of_quotes, file, indent=4, ensure_ascii=False)
 
+    with open('json/authors_bio.json', 'w', encoding='utf-8') as file:
+        json.dump(dict_of_authors_bio, file, indent=4, ensure_ascii=False)
+
+    return render(request, 'main/about.html', {'title': 'Scrape Complit', 'menu': menu})
+
+
+@login_required
+def add_quote(request):
+    if request.method == 'POST':
+        form = QuoteForm(request.POST)
+        if form.is_valid():
+            form.save()  # This will save the form data to the database
+            return redirect('home')  # Replace 'home' with the name of your home page URL pattern
     else:
-        return HttpResponse(f"Failed to retrieve the page. Status code: {response.status_code}")
+        form = QuoteForm()
+    return render(request, 'main/add_quote.html', {'title': 'Famous people quotes', 'menu': menu, 'form': form})
