@@ -1,10 +1,8 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-import json
+from django.shortcuts import render
 import requests
 from bs4 import BeautifulSoup
-
-from users.forms import QuoteForm
+from .models import Quote, AuthorBio
+from django.core.exceptions import ObjectDoesNotExist
 
 menu = [
     {
@@ -27,10 +25,10 @@ menu = [
         'title': 'Scrape-quotes',
         'url_name': 'scrape_quotes',
     },
-    {
-        'title': 'Add_quotes',
-        'url_name': 'add_quote',
-    },
+    # {
+    #     'title': 'Add_quotes',
+    #     'url_name': 'add_quote',
+    # },
 ]
 
 
@@ -42,31 +40,19 @@ def find_in_list_of_dicts(bio_db, full_name, author_name):
 
 
 def quotes(request):
-    try:
-        with open('json/authors_quotes.json', 'r', encoding='utf-8') as file:
-            quote_db = json.load(file)
-    except FileNotFoundError:
-        quote_db = []
-
+    quotes = Quote.objects.all()
     data = {
         'title': 'Famous people quotes',
         'menu': menu,
-        'posts': quote_db,
+        'posts': quotes,
     }
-
     return render(request, 'main/quotes.html', context=data)
 
 
 def author_bio(request, author_name):
     try:
-        with open('json/authors_bio.json', 'r', encoding='utf-8') as file:
-            bio_db = json.load(file)
-    except FileNotFoundError:
-        bio_db = []
-
-    author_bio = find_in_list_of_dicts(bio_db, 'Fullname', author_name)
-
-    if not author_bio:
+        author_bio = AuthorBio.objects.get(fullname=author_name)
+    except ObjectDoesNotExist:
         return render(request, 'main/author_not_found.html', {'author_name': author_name, 'menu': menu})
 
     data = {
@@ -91,9 +77,6 @@ def login(request):
 
 def scrape_quotes_from_website(request):
     url = 'https://quotes.toscrape.com'
-    dict_of_quotes = []
-    dict_of_authors_bio = []
-    counter = 1
 
     while url:
         my_requests = requests.get(url)
@@ -105,13 +88,8 @@ def scrape_quotes_from_website(request):
             text = quote.find('span').text
             author = quote.find('small').text
             tags = [tag.text for tag in quote.find_all(class_='tag')]
-            dict_of_quotes.append(
-                {
-                    'Author': author,
-                    'Quote': text,
-                    'Tags': tags,
-                }
-            )
+
+            q = Quote.objects.create(author_name=author, quote_text=text, tags=tags)
 
             author_bio_link = 'https://quotes.toscrape.com' + quote.find('a')['href']
             my_author_bio_requests = requests.get(author_bio_link)
@@ -119,17 +97,15 @@ def scrape_quotes_from_website(request):
             author_soup = BeautifulSoup(src_author, 'lxml')
 
             fullname = author_soup.find(class_='author-title').text
-            born_date = author_soup.find(class_='author-born-date').text
+            born_date_str = author_soup.find(class_='author-born-date').text
+            # Convert the date string to the correct format
+            from datetime import datetime
+            born_date = datetime.strptime(born_date_str, '%B %d, %Y').strftime('%Y-%m-%d')
             born_location = author_soup.find(class_='author-born-location').text
             description = author_soup.find(class_='author-description').text.strip()
-            dict_of_authors_bio.append(
-                {
-                    'Fullname': fullname,
-                    'Born_Date': born_date,
-                    'Born_Location': born_location,
-                    'Description': description,
-                }
-            )
+
+            AuthorBio.objects.create(fullname=fullname, born_date=born_date, born_location=born_location,
+                                     description=description, quote=q)
 
         next_page_href = soup.find(class_='next')
         if next_page_href:
@@ -138,22 +114,4 @@ def scrape_quotes_from_website(request):
         else:
             break
 
-    with open('json/authors_quotes.json', 'w', encoding='utf-8') as file:
-        json.dump(dict_of_quotes, file, indent=4, ensure_ascii=False)
-
-    with open('json/authors_bio.json', 'w', encoding='utf-8') as file:
-        json.dump(dict_of_authors_bio, file, indent=4, ensure_ascii=False)
-
-    return render(request, 'main/about.html', {'title': 'Scrape Complit', 'menu': menu})
-
-
-@login_required
-def add_quote(request):
-    if request.method == 'POST':
-        form = QuoteForm(request.POST)
-        if form.is_valid():
-            form.save()  # This will save the form data to the database
-            return redirect('home')  # Replace 'home' with the name of your home page URL pattern
-    else:
-        form = QuoteForm()
-    return render(request, 'main/add_quote.html', {'title': 'Famous people quotes', 'menu': menu, 'form': form})
+    return render(request, 'main/about.html', {'title': 'Scrape Complete', 'menu': menu})

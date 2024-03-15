@@ -1,6 +1,5 @@
 from django import forms
-
-from users.models import Quote
+from users.models import UserQuote
 
 
 class LoginUserForm(forms.Form):
@@ -13,7 +12,7 @@ class LoginUserForm(forms.Form):
 
 class QuoteForm(forms.ModelForm):
     class Meta:
-        model = Quote
+        model = UserQuote
         fields = ['quote_text', 'author_name', 'tags']
 
     quote_text = forms.CharField(label='Quote', max_length=500)
