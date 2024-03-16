@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Home page{% endblock %}
+
+{% block content %}
+    <h1>Home page</h1>
+    <h2>Welcome to our quote collection site!</h2>
+    {% if user.is_authenticated %}
+        <button onclick="location.href='{% url 'add_quote' %}'" class="btn btn-primary">Add quote</button>
+    {% endif %}
+{% endblock %}

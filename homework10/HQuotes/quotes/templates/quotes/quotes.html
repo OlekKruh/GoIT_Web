@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Quotes</h2>
+{% if user.is_authenticated %}
+    <a href="{% url 'start_scraping' %}" class="btn btn-primary">Start Scraping</a>
+    <a href="{% url 'clear_quotes' %}" class="btn btn-danger" onclick="return confirm('Are you sure?');">Clear Quotes</a>
+{% endif %}
+<div class="quotes-container">
+    {% for quote in quotes %}
+        <div class="quote-box">
+            <p class="quote-text">"{{ quote.text }}"</p>
+            <p class="quote-author"><a href="{% url 'author_detail' quote.author.fullname %}">- {{ quote.author }}</a></p>
+            <p class="quote-tags">Tags: {{ quote.tags }}</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<h2>{{ author_bio.fullname }}</h2>
+<p><strong>Birthdate:</strong> {{ author_bio.born_date }}</p>
+<p><strong>Birthplace:</strong> {{ author_bio.born_location }}</p>
+<p><strong>Description:</strong> {{ author_bio.description|linebreaks }}</p>
+
+{% endblock %}
+
