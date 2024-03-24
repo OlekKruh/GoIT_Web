@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+from sqlalchemy import or_, extract
 from sqlalchemy.orm import Session
 from homework11.src import schemas
 from homework11.src.database import models
@@ -37,3 +39,25 @@ def delete_contact(db: Session, contact_id: int):
         db.commit()
         return True
     return False
+
+
+def search_contacts(db: Session, query: str):
+    return db.query(models.Contact).filter(
+        or_(
+            models.Contact.first_name.ilike(f"%{query}%"),
+            models.Contact.last_name.ilike(f"%{query}%"),
+            models.Contact.email.ilike(f"%{query}%")
+        )
+    ).all()
+
+
+def get_upcoming_birthdays(db: Session):
+    today = datetime.today()
+    upcoming = today + timedelta(days=7)
+    return db.query(models.Contact).filter(
+        models.Contact.birth_date.isnot(None),
+        extract('month', models.Contact.birth_date) >= today.month,
+        extract('month', models.Contact.birth_date) <= upcoming.month,
+        extract('day', models.Contact.birth_date) >= today.day,
+        extract('day', models.Contact.birth_date) <= upcoming.day
+    ).all()
